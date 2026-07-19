@@ -1,0 +1,28 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('vendor_statements', function (Blueprint $table) {
+            $table->id();
+            $table->string('vendor_name');
+            $table->boolean('statement_received')->default(false);
+            $table->string('status')->nullable();       // e.g., "correct", "opening difference"
+            $table->string('assigned_to')->nullable();  // Person handling it
+            $table->string('period')->nullable();        // e.g., "June 2026"
+            $table->text('notes')->nullable();
+            $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('vendor_statements');
+    }
+};

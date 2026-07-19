@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../Contexts/AuthContext';
 import { 
     LayoutDashboard, 
@@ -9,23 +9,39 @@ import {
     LogOut, 
     Menu, 
     X, 
-    Home,
+    Scale,
     UserCircle,
-    Database
+    Database,
+    Coins,
+    Truck,
+    FileCheck,
+    FileText,
+    Settings
 } from 'lucide-react';
 
 const Layout = ({ currentTab, setCurrentTab, children }) => {
     const { user, logout } = useAuth();
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [now, setNow] = useState(new Date());
+
+    useEffect(() => {
+        const timer = setInterval(() => setNow(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
 
     const menuItems = [
-        { id: 'dashboard',   name: 'Dashboard',        icon: LayoutDashboard, role: 'staff' },
-        { id: 'activities',  name: 'Activity Log',      icon: ClipboardList,   role: 'staff' },
-        { id: 'daybook',     name: 'Day Book',          icon: Receipt,         role: 'staff' },
-        { id: 'tasks',       name: 'Tasks & Reminders', icon: CheckSquare,     role: 'staff' },
-        { id: 'profile',     name: 'My Profile',        icon: UserCircle,      role: 'staff' },
-        { id: 'staff',       name: 'Staff Management',  icon: Users,           role: 'admin' },
-        { id: 'masterdata',  name: 'Master Data',       icon: Database,        role: 'admin' },
+        { id: 'dashboard',        name: 'Dashboard',         icon: LayoutDashboard, role: 'staff' },
+        { id: 'activities',       name: 'Activity Log',      icon: ClipboardList,   role: 'staff' },
+        { id: 'daybook',          name: 'Day Book',          icon: Receipt,         role: 'staff' },
+        { id: 'salaryadvance',    name: 'Salary Advance',    icon: Coins,           role: 'staff' },
+        { id: 'cargolog',         name: 'Cargo Log',         icon: Truck,           role: 'staff' },
+        { id: 'vendorstatements', name: 'Vendor Statements', icon: FileCheck,       role: 'staff' },
+        { id: 'chequeregister',   name: 'Cheque Register',   icon: FileText,        role: 'staff' },
+        { id: 'tasks',            name: 'Tasks & Reminders', icon: CheckSquare,     role: 'staff' },
+        { id: 'profile',          name: 'My Profile',        icon: UserCircle,      role: 'staff' },
+        { id: 'staff',            name: 'Staff Management',  icon: Users,           role: 'admin' },
+        { id: 'masterdata',       name: 'Master Data',       icon: Database,        role: 'admin' },
+        { id: 'crmsettings',      name: 'CRM Settings',      icon: Settings,        role: 'admin' },
     ];
 
     const getInitials = (name) => {
@@ -36,16 +52,19 @@ const Layout = ({ currentTab, setCurrentTab, children }) => {
 
     const handleTabChange = (tabId) => {
         setCurrentTab(tabId);
-        setMobileOpen(false); // Close sidebar on mobile
+        setMobileOpen(false);
     };
+
+    const formattedDate = now.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    const formattedTime = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
 
     return (
         <div className="app-container">
-            {/* Mobile Header (Topbar for small screens) */}
+            {/* Sidebar */}
             <div className={`sidebar ${mobileOpen ? 'mobile-open' : ''}`}>
                 <div className="sidebar-logo">
                     <div className="logo-icon">
-                        <Home size={18} color="white" />
+                        <Scale size={18} color="white" />
                     </div>
                     <span>Balancely CRM</span>
                     <button 
@@ -59,7 +78,6 @@ const Layout = ({ currentTab, setCurrentTab, children }) => {
                 
                 <ul className="sidebar-menu">
                     {menuItems.map((item) => {
-                        // Check if user has permission
                         if (item.role === 'admin' && user?.role !== 'admin') return null;
                         
                         const IconComponent = item.icon;
@@ -110,9 +128,31 @@ const Layout = ({ currentTab, setCurrentTab, children }) => {
                     </div>
 
                     <div className="topbar-actions">
-                        <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
-                            {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-                        </span>
+                        {/* Live Date & Time */}
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-end',
+                            gap: '1px',
+                        }}>
+                            <span style={{
+                                fontSize: '0.78rem',
+                                fontWeight: '700',
+                                color: 'var(--color-text-primary)',
+                                letterSpacing: '0.02em',
+                                fontVariantNumeric: 'tabular-nums',
+                                fontFamily: 'monospace'
+                            }}>
+                                {formattedTime}
+                            </span>
+                            <span style={{
+                                fontSize: '0.7rem',
+                                color: 'var(--color-text-muted)',
+                                fontWeight: '500'
+                            }}>
+                                {formattedDate}
+                            </span>
+                        </div>
                     </div>
                 </header>
 

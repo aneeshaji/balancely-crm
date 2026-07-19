@@ -8,6 +8,10 @@ use App\Http\Controllers\StaffController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SalaryAdvanceController;
+use App\Http\Controllers\CargoLogController;
+use App\Http\Controllers\VendorStatementController;
+use App\Http\Controllers\ChequeRegisterController;
 use Illuminate\Support\Facades\Route;
 
 // API Authentication Routes
@@ -22,6 +26,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/dashboard/stats', [TransactionController::class, 'dashboardStats']);
     Route::apiResource('/api/tasks', TaskController::class);
     Route::put('/api/tasks/{task}/toggle', [TaskController::class, 'toggleStatus']);
+    
+    // 4 New Excel modules
+    Route::apiResource('/api/salary-advances', SalaryAdvanceController::class);
+    Route::apiResource('/api/cargo-logs', CargoLogController::class);
+    Route::put('/api/cargo-logs/{cargoLog}/pay', [CargoLogController::class, 'markPaid']);
+    Route::apiResource('/api/vendor-statements', VendorStatementController::class);
+    Route::put('/api/vendor-statements/{vendorStatement}/toggle', [VendorStatementController::class, 'toggleReceived']);
+    Route::apiResource('/api/cheques', ChequeRegisterController::class);
     
     // User Profile Routes
     Route::get('/api/profile', [ProfileController::class, 'show']);

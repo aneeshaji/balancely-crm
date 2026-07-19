@@ -3,7 +3,7 @@ import { useAuth, apiFetch } from '../Contexts/AuthContext';
 import { Receipt, Search, Filter, Calendar, Plus, X, TrendingUp, TrendingDown } from 'lucide-react';
 
 const DayBook = () => {
-    const { showToast } = useAuth();
+    const { user, showToast } = useAuth();
     const [transactions, setTransactions] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -89,16 +89,52 @@ const DayBook = () => {
     const totalOutflow = transactions.filter(t => t.type === 'outflow').reduce((sum, t) => sum + parseFloat(t.amount), 0);
     const netBalance = totalInflow - totalOutflow;
 
+    const exportToExcel = () => {
+        if (transactions.length === 0) return;
+        const escapeCSV = (val) => {
+            if (val === null || val === undefined) return '';
+            let result = String(val).replace(/"/g, '""');
+            if (result.search(/("|"|,|\n)/g) >= 0) {
+                result = `"${result}"`;
+            }
+            return result;
+        };
+
+        const headers = ["Date", "Type", "Category", "Description", "Amount (INR)"];
+        const rows = transactions.map(t => [
+            escapeCSV(t.transaction_date ? new Date(t.transaction_date).toLocaleDateString('en-IN') : ''),
+            escapeCSV(t.type === 'inflow' ? 'Inflow' : 'Outflow'),
+            escapeCSV(t.category),
+            escapeCSV(t.description),
+            escapeCSV(parseFloat(t.amount || 0).toFixed(2))
+        ]);
+
+        const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `Day_Book_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
                 <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
                     Day-to-day cash journal tracking all store inflows (customer sales, deposits) and outflows (supplier payments, expenses, wages).
                 </p>
-                <button className="btn btn-primary" onClick={() => setModalOpen(true)}>
-                    <Plus size={18} />
-                    <span>Record Transaction</span>
-                </button>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <button className="btn btn-secondary" onClick={exportToExcel} disabled={transactions.length === 0} style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: transactions.length === 0 ? 0.45 : 1, cursor: transactions.length === 0 ? 'not-allowed' : 'pointer' }}>
+                        <span>Export to Excel</span>
+                    </button>
+                    <button className="btn btn-primary" onClick={() => setModalOpen(true)}>
+                        <Plus size={18} />
+                        <span>Record Transaction</span>
+                    </button>
+                </div>
             </div>
 
             {/* Summary Tally */}
@@ -175,7 +211,7 @@ const DayBook = () => {
                                     <th>Type</th>
                                     <th>Category</th>
                                     <th>Description</th>
-                                    <th>Recorded By</th>
+                                    <th>Added By</th>
                                     <th style={{ textAlign: 'right' }}>Amount</th>
                                 </tr>
                             </thead>

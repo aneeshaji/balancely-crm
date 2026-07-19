@@ -10,6 +10,11 @@ import Tasks from './Pages/Tasks';
 import Staff from './Pages/Staff';
 import Profile from './Pages/Profile';
 import MasterData from './Pages/MasterData';
+import SalaryAdvance from './Pages/SalaryAdvance';
+import CargoLog from './Pages/CargoLog';
+import VendorStatements from './Pages/VendorStatements';
+import ChequeRegister from './Pages/ChequeRegister';
+import CrmSettings from './Pages/CrmSettings';
 import '../css/app.css';
 
 const AppContent = () => {
@@ -34,9 +39,12 @@ const AppContent = () => {
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     boxShadow: '0 0 20px rgba(99, 102, 241, 0.3)'
                 }}>
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="m16 16 3-8 3 8c-.87.65-2.24 1-3.5 1s-2.63-.35-3.5-1Z"/>
+                        <path d="m2 16 3-8 3 8c-.87.65-2.24 1-3.5 1s-2.63-.35-3.5-1Z"/>
+                        <path d="M7 21h10"/>
+                        <path d="M12 3v18"/>
+                        <path d="M3 7h18"/>
                     </svg>
                 </div>
                 <div className="spinner"></div>
@@ -53,11 +61,16 @@ const AppContent = () => {
         switch (currentTab) {
             case 'dashboard':  return <Dashboard setCurrentTab={setCurrentTab} />;
             case 'activities': return <ActivityLog />;
-            case 'daybook':    return <DayBook />;
-            case 'tasks':      return <Tasks />;
-            case 'staff':      return <Staff />;
-            case 'profile':    return <Profile />;
-            case 'masterdata': return <MasterData />;
+            case 'daybook':          return <DayBook />;
+            case 'salaryadvance':    return <SalaryAdvance />;
+            case 'cargolog':         return <CargoLog />;
+            case 'vendorstatements': return <VendorStatements />;
+            case 'chequeregister':   return <ChequeRegister />;
+            case 'tasks':            return <Tasks />;
+            case 'staff':            return <Staff />;
+            case 'profile':          return <Profile />;
+            case 'masterdata':       return <MasterData />;
+            case 'crmsettings':      return <CrmSettings />;
             default:           return <Dashboard setCurrentTab={setCurrentTab} />;
         }
     };
