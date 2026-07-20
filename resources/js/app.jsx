@@ -1,21 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AuthProvider, useAuth } from './Contexts/AuthContext';
 import Layout from './Components/Layout';
 import Login from './Pages/Login';
-import Dashboard from './Pages/Dashboard';
-import ActivityLog from './Pages/ActivityLog';
-import DayBook from './Pages/DayBook';
-import Tasks from './Pages/Tasks';
-import Staff from './Pages/Staff';
-import Profile from './Pages/Profile';
-import MasterData from './Pages/MasterData';
-import SalaryAdvance from './Pages/SalaryAdvance';
-import CargoLog from './Pages/CargoLog';
-import VendorStatements from './Pages/VendorStatements';
-import ChequeRegister from './Pages/ChequeRegister';
-import CrmSettings from './Pages/CrmSettings';
 import '../css/app.css';
+
+// Lazy-load all page components — each becomes its own JS chunk.
+// The browser only downloads a page's JS when the user first visits it.
+const Dashboard        = lazy(() => import('./Pages/Dashboard'));
+const ActivityLog      = lazy(() => import('./Pages/ActivityLog'));
+const DayBook          = lazy(() => import('./Pages/DayBook'));
+const Tasks            = lazy(() => import('./Pages/Tasks'));
+const Staff            = lazy(() => import('./Pages/Staff'));
+const Profile          = lazy(() => import('./Pages/Profile'));
+const MasterData       = lazy(() => import('./Pages/MasterData'));
+const SalaryAdvance    = lazy(() => import('./Pages/SalaryAdvance'));
+const CargoLog         = lazy(() => import('./Pages/CargoLog'));
+const VendorStatements = lazy(() => import('./Pages/VendorStatements'));
+const ChequeRegister   = lazy(() => import('./Pages/ChequeRegister'));
+const CrmSettings      = lazy(() => import('./Pages/CrmSettings'));
+const KnowledgeBase    = lazy(() => import('./Pages/KnowledgeBase'));
+
+// Minimal inline fallback — avoids a blank flash between tab switches.
+const PageSkeleton = () => (
+    <div style={{
+        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        minHeight: '300px', color: 'var(--color-text-muted)', flexDirection: 'column', gap: '16px'
+    }}>
+        <div className="spinner" />
+        <span style={{ fontSize: '0.8rem' }}>Loading…</span>
+    </div>
+);
 
 const AppContent = () => {
     const { user, loading } = useAuth();
@@ -59,8 +74,8 @@ const AppContent = () => {
 
     const renderPage = () => {
         switch (currentTab) {
-            case 'dashboard':  return <Dashboard setCurrentTab={setCurrentTab} />;
-            case 'activities': return <ActivityLog />;
+            case 'dashboard':        return <Dashboard setCurrentTab={setCurrentTab} />;
+            case 'activities':       return <ActivityLog />;
             case 'daybook':          return <DayBook />;
             case 'salaryadvance':    return <SalaryAdvance />;
             case 'cargolog':         return <CargoLog />;
@@ -69,15 +84,18 @@ const AppContent = () => {
             case 'tasks':            return <Tasks />;
             case 'staff':            return <Staff />;
             case 'profile':          return <Profile />;
+            case 'knowledgebase':    return <KnowledgeBase />;
             case 'masterdata':       return <MasterData />;
             case 'crmsettings':      return <CrmSettings />;
-            default:           return <Dashboard setCurrentTab={setCurrentTab} />;
+            default:                 return <Dashboard setCurrentTab={setCurrentTab} />;
         }
     };
 
     return (
         <Layout currentTab={currentTab} setCurrentTab={setCurrentTab}>
-            {renderPage()}
+            <Suspense fallback={<PageSkeleton />}>
+                {renderPage()}
+            </Suspense>
         </Layout>
     );
 };

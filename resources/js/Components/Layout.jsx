@@ -16,7 +16,8 @@ import {
     Truck,
     FileCheck,
     FileText,
-    Settings
+    Settings,
+    BookOpen
 } from 'lucide-react';
 
 const Layout = ({ currentTab, setCurrentTab, children }) => {
@@ -39,6 +40,7 @@ const Layout = ({ currentTab, setCurrentTab, children }) => {
         { id: 'chequeregister',   name: 'Cheque Register',   icon: FileText,        role: 'staff' },
         { id: 'tasks',            name: 'Tasks & Reminders', icon: CheckSquare,     role: 'staff' },
         { id: 'profile',          name: 'My Profile',        icon: UserCircle,      role: 'staff' },
+        { id: 'knowledgebase',    name: 'Knowledge Base',    icon: BookOpen,        role: 'staff' },
         { id: 'staff',            name: 'Staff Management',  icon: Users,           role: 'admin' },
         { id: 'masterdata',       name: 'Master Data',       icon: Database,        role: 'admin' },
         { id: 'crmsettings',      name: 'CRM Settings',      icon: Settings,        role: 'admin' },

@@ -79,51 +79,50 @@ class TransactionController extends Controller
 
     public function dashboardStats()
     {
-        $today = Carbon::today();
-        
-        $todayInflow = Transaction::whereDate('transaction_date', $today)
-            ->where('type', 'inflow')
-            ->sum('amount');
+        $today   = Carbon::today();
+        $weekAgo = Carbon::today()->subDays(6)->startOfDay();
 
-        $todayOutflow = Transaction::whereDate('transaction_date', $today)
-            ->where('type', 'outflow')
-            ->sum('amount');
-
-        $netChange = $todayInflow - $todayOutflow;
+        // --- Today's totals (2 queries) ---
+        $todayInflow  = Transaction::whereDate('transaction_date', $today)->where('type', 'inflow')->sum('amount');
+        $todayOutflow = Transaction::whereDate('transaction_date', $today)->where('type', 'outflow')->sum('amount');
+        $netChange    = $todayInflow - $todayOutflow;
 
         $activityCountToday = Activity::whereDate('logged_at', $today)->count();
-        $pendingTasksCount = Task::where('status', 'pending')->count();
+        $pendingTasksCount  = Task::where('status', 'pending')->count();
 
-        // 7-day transaction history for trends chart
+        // --- 7-day chart: 2 grouped queries instead of 14 individual ones ---
+        $rawInflows = Transaction::selectRaw('DATE(transaction_date) as date, SUM(amount) as total')
+            ->where('type', 'inflow')
+            ->whereBetween('transaction_date', [$weekAgo, $today->endOfDay()])
+            ->groupBy('date')
+            ->pluck('total', 'date');
+
+        $rawOutflows = Transaction::selectRaw('DATE(transaction_date) as date, SUM(amount) as total')
+            ->where('type', 'outflow')
+            ->whereBetween('transaction_date', [$weekAgo, $today->endOfDay()])
+            ->groupBy('date')
+            ->pluck('total', 'date');
+
+        // Build the labelled chart array from the aggregated results
         $chartData = [];
         for ($i = 6; $i >= 0; $i--) {
-            $date = Carbon::today()->subDays($i);
+            $date    = Carbon::today()->subDays($i);
             $dateStr = $date->format('Y-m-d');
-            $label = $date->format('D, M d');
-
-            $inflow = Transaction::whereDate('transaction_date', $date)
-                ->where('type', 'inflow')
-                ->sum('amount');
-
-            $outflow = Transaction::whereDate('transaction_date', $date)
-                ->where('type', 'outflow')
-                ->sum('amount');
-
             $chartData[] = [
-                'date' => $dateStr,
-                'label' => $label,
-                'inflow' => (float)$inflow,
-                'outflow' => (float)$outflow,
+                'date'    => $dateStr,
+                'label'   => $date->format('D, M d'),
+                'inflow'  => (float) ($rawInflows[$dateStr]  ?? 0),
+                'outflow' => (float) ($rawOutflows[$dateStr] ?? 0),
             ];
         }
 
         return response()->json([
-            'today_inflow' => (float)$todayInflow,
-            'today_outflow' => (float)$todayOutflow,
-            'net_change' => (float)$netChange,
-            'activities_count_today' => $activityCountToday,
-            'pending_tasks_count' => $pendingTasksCount,
-            'chart_data' => $chartData,
+            'today_inflow'          => (float) $todayInflow,
+            'today_outflow'         => (float) $todayOutflow,
+            'net_change'            => (float) $netChange,
+            'activities_count_today'=> $activityCountToday,
+            'pending_tasks_count'   => $pendingTasksCount,
+            'chart_data'            => $chartData,
         ]);
     }
 }
