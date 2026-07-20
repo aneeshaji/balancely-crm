@@ -55,7 +55,7 @@
                             <table border="0" cellpadding="0" cellspacing="0" width="100%">
                                 <tr>
                                     <td align="center">
-                                        <a href="{{ config('app.url') }}" target="_blank" style="background-color: #4f46e5; color: #ffffff; display: inline-block; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px; box-shadow: 0 4px 6px rgba(79, 70, 229, 0.15);">
+                                        <a href="{{ url('/') }}" target="_blank" style="background-color: #4f46e5; color: #ffffff; display: inline-block; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px; box-shadow: 0 4px 6px rgba(79, 70, 229, 0.15);">
                                             Sign In to Workspace
                                         </a>
                                     </td>

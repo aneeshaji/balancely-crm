@@ -158,6 +158,33 @@ const Layout = ({ currentTab, setCurrentTab, children }) => {
 
                 <main className="content-body">
                     {children}
+                    
+                    <footer style={{ 
+                        marginTop: 'auto', 
+                        paddingTop: '24px', 
+                        borderTop: '1px solid var(--border-subtle)', 
+                        textAlign: 'center', 
+                        fontSize: '0.8rem', 
+                        color: 'var(--color-text-muted)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px'
+                    }}>
+                        <span>
+                            &copy; {new Date().getFullYear()} <strong>Balancely CRM</strong>. All Rights Reserved.
+                        </span>
+                        <span>
+                            Designed & Developed by{' '}
+                            <a 
+                                href="https://technobyteinnovations.in/" 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                style={{ color: 'var(--color-accent)', textDecoration: 'none', fontWeight: '600' }}
+                            >
+                                TechnoByte Innovations
+                            </a>
+                        </span>
+                    </footer>
                 </main>
             </div>
         </div>

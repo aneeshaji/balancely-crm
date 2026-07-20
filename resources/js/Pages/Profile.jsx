@@ -4,25 +4,35 @@ import { User, Mail, Lock, Shield, Eye, EyeOff, Save, KeyRound, Briefcase } from
 
 const Profile = () => {
     const { user, setUser, showToast } = useAuth();
-    const [profile, setProfile] = useState({ name: '', email: '', designation: null });
-    const [profileForm, setProfileForm] = useState({ name: '', email: '' });
     const [pwForm, setPwForm] = useState({ current_password: '', password: '', password_confirmation: '' });
     const [showCurrent, setShowCurrent] = useState(false);
     const [showNew, setShowNew] = useState(false);
     const [profileLoading, setProfileLoading] = useState(false);
     const [pwLoading, setPwLoading] = useState(false);
-    const [profileErrors, setProfileErrors] = useState({});
     const [pwErrors, setPwErrors] = useState({});
     const [activeTab, setActiveTab] = useState('info');
+    const [profileErrors, setProfileErrors] = useState({});
+    const [profile, setProfile] = useState({ name: '', email: '', designation: null });
+    const [profileForm, setProfileForm] = useState({ name: user?.name || '', email: user?.email || '' });
 
     useEffect(() => {
+        // Pre-fill immediately from cached auth user
+        if (user) {
+            setProfile(prev => ({ ...prev, name: user.name, email: user.email, role: user.role }));
+            setProfileForm({ name: user.name, email: user.email });
+        }
+        // Fetch full profile (includes designation) from API
         apiFetch('/api/profile')
-            .then(r => r.json())
+            .then(r => {
+                if (!r.ok) throw new Error('Profile fetch failed: ' + r.status);
+                return r.json();
+            })
             .then(data => {
                 setProfile(data);
                 setProfileForm({ name: data.name, email: data.email });
-            });
-    }, []);
+            })
+            .catch(err => console.error(err));
+    }, [user]);
 
     const handleProfileSubmit = async (e) => {
         e.preventDefault();
