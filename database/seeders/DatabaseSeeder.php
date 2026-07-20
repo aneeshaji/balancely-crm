@@ -57,7 +57,7 @@ class DatabaseSeeder extends Seeder
         // 3. Create Users
         $admin = User::create([
             'name'           => 'John (Admin)',
-            'email'          => 'admin@shop.com',
+            'email'          => 'admin@balancely.in',
             'password'       => Hash::make('password'),
             'role'           => 'admin',
             'designation_id' => $designationModels['Store Manager']->id,
@@ -65,7 +65,7 @@ class DatabaseSeeder extends Seeder
 
         $staff = User::create([
             'name'           => 'Sarah (Accounts)',
-            'email'          => 'staff@shop.com',
+            'email'          => 'staff@balancely.in',
             'password'       => Hash::make('password'),
             'role'           => 'staff',
             'designation_id' => $designationModels['Accountant']->id,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../Contexts/AuthContext';
-import { Home, Eye, EyeOff } from 'lucide-react';
+import { LayoutDashboard, Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
     const { login } = useAuth();
@@ -28,10 +28,10 @@ const Login = () => {
             <div className="auth-card">
                 <div className="auth-header">
                     <div className="auth-logo">
-                        <Home size={24} color="white" />
+                        <LayoutDashboard size={24} color="white" />
                     </div>
                     <h2 className="auth-title">Balancely CRM</h2>
-                    <p className="auth-subtitle">Accounts Staff Admin Panel Login</p>
+                    <p className="auth-subtitle">Sign in to your workspace</p>
                 </div>
 
                 <form onSubmit={handleSubmit}>
@@ -41,7 +41,7 @@ const Login = () => {
                             type="email"
                             id="email"
                             className="form-control"
-                            placeholder="staff@shop.com"
+                            placeholder="Enter your email address"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
@@ -104,9 +104,7 @@ const Login = () => {
                     </div>
                 </form>
 
-                <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                    <span>Demo Accounts: admin@shop.com / staff@shop.com<br />Password: password</span>
-                </div>
+
             </div>
         </div>
     );
