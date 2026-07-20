@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth, apiFetch } from '../Contexts/AuthContext';
-import { Users, Plus, X, Shield, User, Briefcase } from 'lucide-react';
+import { Users, Plus, X, Shield, User, Briefcase, Eye, EyeOff, Key } from 'lucide-react';
 
 const Staff = () => {
     const { user: currentUser, showToast } = useAuth();
@@ -11,6 +11,60 @@ const Staff = () => {
     const [submitting, setSubmitting] = useState(false);
     const [form, setForm] = useState({ name: '', email: '', password: '', role: 'staff', designation_id: '' });
     const [errors, setErrors] = useState({});
+
+    // Password reset and generation states
+    const [resetModalOpen, setResetModalOpen] = useState(false);
+    const [selectedMember, setSelectedMember] = useState(null);
+    const [resetPasswordVal, setResetPasswordVal] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showResetPassword, setShowResetPassword] = useState(false);
+    const [resetting, setResetting] = useState(false);
+
+    const generatePassword = () => {
+        const length = 12;
+        const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*";
+        let retVal = "";
+        for (let i = 0, n = charset.length; i < length; ++i) {
+            retVal += charset.charAt(Math.floor(Math.random() * n));
+        }
+        setForm({ ...form, password: retVal });
+        setShowPassword(true);
+    };
+
+    const generateResetPassword = () => {
+        const length = 12;
+        const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*";
+        let retVal = "";
+        for (let i = 0, n = charset.length; i < length; ++i) {
+            retVal += charset.charAt(Math.floor(Math.random() * n));
+        }
+        setResetPasswordVal(retVal);
+        setShowResetPassword(true);
+    };
+
+    const handleResetSubmit = async (e) => {
+        e.preventDefault();
+        setResetting(true);
+        try {
+            const res = await apiFetch(`/api/staff/${selectedMember.id}/reset-password`, {
+                method: 'POST',
+                body: JSON.stringify({ password: resetPasswordVal })
+            });
+            if (res.ok) {
+                showToast(`Password reset successfully for ${selectedMember.name} and email sent!`, 'success');
+                setResetModalOpen(false);
+                setSelectedMember(null);
+                setResetPasswordVal('');
+            } else {
+                const data = await res.json();
+                showToast(data.message || 'Failed to reset password.', 'error');
+            }
+        } catch (error) {
+            showToast('Network error.', 'error');
+        } finally {
+            setResetting(false);
+        }
+    };
 
     const fetchStaff = async () => {
         setLoading(true);
@@ -155,6 +209,31 @@ const Staff = () => {
                                     <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Transactions</div>
                                 </div>
                             </div>
+
+                            {currentUser?.role === 'admin' && (
+                                <button 
+                                    className="btn btn-secondary" 
+                                    style={{ 
+                                        marginTop: '12px', 
+                                        padding: '8px 12px', 
+                                        fontSize: '0.85rem', 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        justifyContent: 'center', 
+                                        gap: '6px',
+                                        width: '100%' 
+                                    }}
+                                    onClick={() => {
+                                        setSelectedMember(member);
+                                        setResetPasswordVal('');
+                                        setShowResetPassword(false);
+                                        setResetModalOpen(true);
+                                    }}
+                                >
+                                    <Key size={14} />
+                                    <span>Reset Password</span>
+                                </button>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -180,8 +259,39 @@ const Staff = () => {
                                 {errors.email && <span className="error-text">{errors.email[0]}</span>}
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Initial Password</label>
-                                <input type="password" className="form-control" placeholder="Min. 8 characters" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required minLength={8} />
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                    <label className="form-label" style={{ margin: 0 }}>Initial Password</label>
+                                    <button 
+                                        type="button" 
+                                        style={{ fontSize: '0.8rem', color: 'var(--color-accent)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontWeight: 600 }}
+                                        onClick={generatePassword}
+                                    >
+                                        Generate Password
+                                    </button>
+                                </div>
+                                <div style={{ position: 'relative' }}>
+                                    <input 
+                                        type={showPassword ? 'text' : 'password'} 
+                                        className="form-control" 
+                                        placeholder="Min. 8 characters" 
+                                        value={form.password} 
+                                        onChange={(e) => setForm({ ...form, password: e.target.value })} 
+                                        required 
+                                        minLength={8}
+                                        style={{ paddingRight: '40px' }}
+                                    />
+                                    <button
+                                        type="button"
+                                        style={{
+                                            position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
+                                            background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)',
+                                            display: 'flex', alignItems: 'center', padding: '4px'
+                                        }}
+                                        onClick={() => setShowPassword(!showPassword)}
+                                    >
+                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                </div>
                                 {errors.password && <span className="error-text">{errors.password[0]}</span>}
                             </div>
                             <div className="form-group">
@@ -205,6 +315,67 @@ const Staff = () => {
                             <button type="button" className="btn btn-secondary" onClick={() => setModalOpen(false)}>Cancel</button>
                             <button type="submit" className="btn btn-primary" disabled={submitting}>
                                 {submitting ? 'Registering...' : 'Register Staff'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
+            {/* Reset Password Modal */}
+            {resetModalOpen && selectedMember && (
+                <div className="modal-overlay">
+                    <form className="modal-content" onSubmit={handleResetSubmit}>
+                        <div className="modal-header">
+                            <h3 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Key size={20} style={{ color: 'var(--color-accent)' }} />
+                                <span>Reset Password: {selectedMember.name}</span>
+                            </h3>
+                            <button type="button" className="modal-close-btn" onClick={() => { setResetModalOpen(false); setSelectedMember(null); }}><X size={20} /></button>
+                        </div>
+                        <div className="modal-body">
+                            <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: '16px' }}>
+                                Resetting the password will update this user's credentials in the database and automatically email them their new password.
+                            </p>
+                            <div className="form-group">
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                    <label className="form-label" style={{ margin: 0 }}>New Password</label>
+                                    <button 
+                                        type="button" 
+                                        style={{ fontSize: '0.8rem', color: 'var(--color-accent)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontWeight: 600 }}
+                                        onClick={generateResetPassword}
+                                    >
+                                        Generate Password
+                                    </button>
+                                </div>
+                                <div style={{ position: 'relative' }}>
+                                    <input 
+                                        type={showResetPassword ? 'text' : 'password'} 
+                                        className="form-control" 
+                                        placeholder="Min. 8 characters" 
+                                        value={resetPasswordVal} 
+                                        onChange={(e) => setResetPasswordVal(e.target.value)} 
+                                        required 
+                                        minLength={8}
+                                        style={{ paddingRight: '40px' }}
+                                    />
+                                    <button
+                                        type="button"
+                                        style={{
+                                            position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
+                                            background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)',
+                                            display: 'flex', alignItems: 'center', padding: '4px'
+                                        }}
+                                        onClick={() => setShowResetPassword(!showResetPassword)}
+                                    >
+                                        {showResetPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-secondary" onClick={() => { setResetModalOpen(false); setSelectedMember(null); }}>Cancel</button>
+                            <button type="submit" className="btn btn-primary" disabled={resetting}>
+                                {resetting ? 'Resetting...' : 'Reset & Email Staff'}
                             </button>
                         </div>
                     </form>

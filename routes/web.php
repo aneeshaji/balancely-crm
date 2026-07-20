@@ -48,6 +48,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('can:admin-only')->group(function () {
         Route::get('/api/staff', [StaffController::class, 'index']);
         Route::post('/api/staff', [StaffController::class, 'store']);
+        Route::post('/api/staff/{user}/reset-password', [StaffController::class, 'resetPassword']);
         
         // Master Data Category & Designation Write Routes
         Route::apiResource('/api/categories', CategoryController::class)->except(['index']);
