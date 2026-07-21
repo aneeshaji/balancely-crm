@@ -17,18 +17,62 @@ import {
     FileCheck,
     FileText,
     Settings,
-    BookOpen
+    BookOpen,
+    History,
+    ArrowUp
 } from 'lucide-react';
 
 const Layout = ({ currentTab, setCurrentTab, children }) => {
     const { user, logout } = useAuth();
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [desktopCollapsed, setDesktopCollapsed] = useState(false);
     const [now, setNow] = useState(new Date());
+    const [showScrollTop, setShowScrollTop] = useState(false);
 
     useEffect(() => {
         const timer = setInterval(() => setNow(new Date()), 1000);
         return () => clearInterval(timer);
     }, []);
+
+    // Reset scroll on tab switch
+    useEffect(() => {
+        const contentBody = document.querySelector('.content-body');
+        if (contentBody) {
+            contentBody.scrollTop = 0;
+        }
+    }, [currentTab]);
+
+    // Handle scroll to top button visibility
+    useEffect(() => {
+        const contentBody = document.querySelector('.content-body');
+        if (!contentBody) return;
+
+        const handleScroll = () => {
+            if (contentBody.scrollTop > 300) {
+                setShowScrollTop(true);
+            } else {
+                setShowScrollTop(false);
+            }
+        };
+
+        contentBody.addEventListener('scroll', handleScroll);
+        return () => contentBody.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const scrollToTop = () => {
+        const contentBody = document.querySelector('.content-body');
+        if (contentBody) {
+            contentBody.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    const handleToggle = () => {
+        if (window.innerWidth <= 768) {
+            setMobileOpen(!mobileOpen);
+        } else {
+            setDesktopCollapsed(!desktopCollapsed);
+        }
+    };
 
     const menuItems = [
         { id: 'dashboard',        name: 'Dashboard',         icon: LayoutDashboard, role: 'staff' },
@@ -43,6 +87,7 @@ const Layout = ({ currentTab, setCurrentTab, children }) => {
         { id: 'knowledgebase',    name: 'Knowledge Base',    icon: BookOpen,        role: 'staff' },
         { id: 'staff',            name: 'Staff Management',  icon: Users,           role: 'admin' },
         { id: 'masterdata',       name: 'Master Data',       icon: Database,        role: 'admin' },
+        { id: 'auditlogs',        name: 'System Audit Logs', icon: History,         role: 'admin' },
         { id: 'crmsettings',      name: 'CRM Settings',      icon: Settings,        role: 'admin' },
     ];
 
@@ -61,7 +106,7 @@ const Layout = ({ currentTab, setCurrentTab, children }) => {
     const formattedTime = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
 
     return (
-        <div className="app-container">
+        <div className={`app-container ${desktopCollapsed ? 'sidebar-collapsed' : ''}`}>
             {/* Sidebar */}
             <div className={`sidebar ${mobileOpen ? 'mobile-open' : ''}`}>
                 <div className="sidebar-logo">
@@ -70,9 +115,9 @@ const Layout = ({ currentTab, setCurrentTab, children }) => {
                     </div>
                     <span>Balancely CRM</span>
                     <button 
-                        className="modal-close-btn" 
-                        style={{ marginLeft: 'auto', display: window.innerWidth <= 768 ? 'block' : 'none' }}
+                        className="sidebar-close-btn" 
                         onClick={() => setMobileOpen(false)}
+                        aria-label="Close Sidebar"
                     >
                         <X size={20} />
                     </button>
@@ -116,26 +161,68 @@ const Layout = ({ currentTab, setCurrentTab, children }) => {
 
             {/* Main Wrapper */}
             <div className="main-wrapper">
-                <header className="topbar">
+                <header className="topbar" style={{
+                    height: '70px',
+                    minHeight: '70px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0 32px',
+                    position: 'sticky',
+                    top: 0,
+                    zIndex: 90,
+                    boxSizing: 'border-box'
+                }}>
                     <button 
-                        className="modal-close-btn" 
-                        style={{ display: 'flex', border: '1px solid var(--border-subtle)', padding: '6px', borderRadius: '6px' }}
-                        onClick={() => setMobileOpen(!mobileOpen)}
+                        className="sidebar-toggle" 
+                        onClick={handleToggle}
+                        aria-label="Toggle Sidebar"
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            height: '36px',
+                            width: '36px',
+                            padding: 0,
+                            borderRadius: '8px',
+                            border: '1px solid var(--border-subtle)',
+                            background: 'transparent',
+                            cursor: 'pointer',
+                            alignSelf: 'center',
+                            flexShrink: 0
+                        }}
                     >
                         <Menu size={20} />
                     </button>
                     
-                    <div className="topbar-title" style={{ marginRight: 'auto', marginLeft: '12px' }}>
+                    <div className="topbar-title" style={{ 
+                        marginRight: 'auto', 
+                        marginLeft: '14px',
+                        fontSize: '1.25rem',
+                        fontWeight: '700',
+                        letterSpacing: '-0.5px',
+                        lineHeight: '1.2',
+                        alignSelf: 'center',
+                        display: 'flex',
+                        alignItems: 'center'
+                    }}>
                         {menuItems.find(m => m.id === currentTab)?.name || 'CRM Dashboard'}
                     </div>
 
-                    <div className="topbar-actions">
+                    <div className="topbar-actions" style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        alignSelf: 'center',
+                        gap: '16px'
+                    }}>
                         {/* Live Date & Time */}
                         <div style={{
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'flex-end',
+                            justifyContent: 'center',
                             gap: '1px',
+                            alignSelf: 'center'
                         }}>
                             <span style={{
                                 fontSize: '0.78rem',
@@ -143,14 +230,16 @@ const Layout = ({ currentTab, setCurrentTab, children }) => {
                                 color: 'var(--color-text-primary)',
                                 letterSpacing: '0.02em',
                                 fontVariantNumeric: 'tabular-nums',
-                                fontFamily: 'monospace'
+                                fontFamily: 'monospace',
+                                lineHeight: '1.2'
                             }}>
                                 {formattedTime}
                             </span>
                             <span style={{
                                 fontSize: '0.7rem',
                                 color: 'var(--color-text-muted)',
-                                fontWeight: '500'
+                                fontWeight: '500',
+                                lineHeight: '1.2'
                             }}>
                                 {formattedDate}
                             </span>
@@ -189,6 +278,18 @@ const Layout = ({ currentTab, setCurrentTab, children }) => {
                     </footer>
                 </main>
             </div>
+
+            {/* Scroll to Top Floating Button */}
+            {showScrollTop && (
+                <button 
+                    onClick={scrollToTop} 
+                    className="scroll-to-top-btn"
+                    title="Scroll to Top"
+                    aria-label="Scroll to Top"
+                >
+                    <ArrowUp size={20} />
+                </button>
+            )}
         </div>
     );
 };

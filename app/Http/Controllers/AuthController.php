@@ -23,11 +23,15 @@ class AuthController extends Controller
                 'last_login_at' => now(),
             ]);
 
+            \App\Models\AuditLog::record('auth.login', "User {$user->name} logged in successfully.", null, $user->id);
+
             return response()->json([
                 'message' => 'Login successful',
                 'user' => $user,
             ]);
         }
+
+        \App\Models\AuditLog::record('auth.login_failed', "Failed login attempt for email: " . $credentials['email'], ['email' => $credentials['email']]);
 
         throw ValidationException::withMessages([
             'email' => ['The provided credentials do not match our records.'],
@@ -36,6 +40,11 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        $user = Auth::user();
+        if ($user) {
+            \App\Models\AuditLog::record('auth.logout', "User {$user->name} logged out.", null, $user->id);
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

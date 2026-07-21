@@ -12,6 +12,7 @@ use App\Http\Controllers\SalaryAdvanceController;
 use App\Http\Controllers\CargoLogController;
 use App\Http\Controllers\VendorStatementController;
 use App\Http\Controllers\ChequeRegisterController;
+use App\Http\Controllers\AuditLogController;
 use Illuminate\Support\Facades\Route;
 
 // API Authentication Routes
@@ -53,6 +54,10 @@ Route::middleware('auth')->group(function () {
         // Master Data Category & Designation Write Routes
         Route::apiResource('/api/categories', CategoryController::class)->except(['index']);
         Route::apiResource('/api/designations', DesignationController::class)->except(['index']);
+
+        // Audit & System Error Logs
+        Route::get('/api/audit-logs', [AuditLogController::class, 'index']);
+        Route::delete('/api/audit-logs', [AuditLogController::class, 'destroyAll']);
     });
 });
 

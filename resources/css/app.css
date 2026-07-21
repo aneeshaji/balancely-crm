@@ -1057,3 +1057,84 @@ select.form-control {
         min-width: 100%;
     }
 }
+
+/* --- Sidebar Toggle & Close Buttons --- */
+.sidebar-toggle {
+    display: flex; /* Always display */
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    padding: 6px;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    transition: var(--transition-smooth);
+}
+
+.sidebar-toggle:hover {
+    color: var(--color-text-primary);
+    border-color: var(--border-active);
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.sidebar-close-btn {
+    display: none; /* Hide on desktop */
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    transition: var(--transition-smooth);
+    margin-left: auto;
+}
+
+.sidebar-close-btn:hover {
+    color: var(--color-text-primary);
+}
+
+/* Sidebar collapsed state on desktop */
+.app-container.sidebar-collapsed .sidebar {
+    transform: translateX(-100%);
+}
+
+.app-container.sidebar-collapsed .main-wrapper {
+    margin-left: 0;
+}
+
+/* --- Scroll to Top Floating Button --- */
+.scroll-to-top-btn {
+    position: fixed;
+    bottom: 95px; /* Sits above standard bottom-right toast message container */
+    right: 30px;
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--color-accent), #4f46e5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    z-index: 999;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.scroll-to-top-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.6);
+}
+
+.scroll-to-top-btn:active {
+    transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+    .sidebar-close-btn {
+        display: flex; /* Show on mobile */
+    }
+}

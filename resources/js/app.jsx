@@ -20,6 +20,7 @@ const VendorStatements = lazy(() => import('./Pages/VendorStatements'));
 const ChequeRegister   = lazy(() => import('./Pages/ChequeRegister'));
 const CrmSettings      = lazy(() => import('./Pages/CrmSettings'));
 const KnowledgeBase    = lazy(() => import('./Pages/KnowledgeBase'));
+const AdminActivityLog = lazy(() => import('./Pages/AdminActivityLog'));
 
 // Minimal inline fallback — avoids a blank flash between tab switches.
 const PageSkeleton = () => (
@@ -86,6 +87,7 @@ const AppContent = () => {
             case 'profile':          return <Profile />;
             case 'knowledgebase':    return <KnowledgeBase />;
             case 'masterdata':       return <MasterData />;
+            case 'auditlogs':        return <AdminActivityLog />;
             case 'crmsettings':      return <CrmSettings />;
             default:                 return <Dashboard setCurrentTab={setCurrentTab} />;
         }
