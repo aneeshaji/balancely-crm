@@ -278,13 +278,7 @@ const Dashboard = ({ setCurrentTab }) => {
                         </button>
                     </div>
 
-                    <div style={{ marginTop: '24px', borderTop: '1px solid var(--border-subtle)', paddingTop: '20px' }}>
-                        <h4 style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '12px' }}>Account Staff Guide</h4>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
-                            Record details of custom customer inquiries, delays in inventory shipments, drawer balance reconciliation, or client callbacks daily. All logged actions populate the audit trails for inventory and billing.
-                        </p>
-                    </div>
-                </div>
+                                    </div>
             </div>
 
             {/* Recent Activities Section */}

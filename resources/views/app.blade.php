@@ -6,6 +6,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Balancely CRM — Accounts Panel</title>
     <meta name="description" content="Account staff management panel for Balancely CRM daily activity tracking.">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
 
     {{-- DNS prefetch for external resources --}}
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
