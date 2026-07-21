@@ -4,15 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AuditLogController extends Controller
 {
     /**
-     * Display a listing of the audit logs.
+     * Display a listing of the audit logs WITH summary stats in a single DB roundtrip.
      */
     public function index(Request $request)
     {
-        $query = AuditLog::with('user');
+        $query = AuditLog::with('user:id,name,role');
 
         if ($request->filled('event_group')) {
             $group = $request->event_group;
@@ -45,14 +46,43 @@ class AuditLogController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('description', 'like', "%{$search}%")
                   ->orWhere('event_type', 'like', "%{$search}%")
-                  ->orWhere('ip_address', 'like', "%{$search}%")
-                  ->orWhere('payload', 'like', "%{$search}%");
+                  ->orWhere('ip_address', 'like', "%{$search}%");
+                  // NOTE: Removed payload LIKE search — JSON LIKE scan is extremely slow on large tables.
+                  // Payload is for display only; searching event_type + description is sufficient.
             });
         }
 
-        $logs = $query->orderBy('created_at', 'desc')->paginate(50);
+        $perPage = min((int) $request->get('per_page', 25), 100);
+        $logs = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
-        return response()->json($logs);
+        // --- Inline summary counts (single aggregated query, not 4 separate API calls) ---
+        // Run only when no filters are applied (i.e., the main page load with no group/user/date/search)
+        $summaryStats = null;
+        $hasFilters = $request->filled('event_group') || $request->filled('user_id')
+                   || $request->filled('date') || $request->filled('search');
+
+        if (!$hasFilters) {
+            $raw = DB::table('audit_logs')
+                ->selectRaw("
+                    COUNT(*) as total,
+                    SUM(CASE WHEN event_type LIKE 'auth.%' THEN 1 ELSE 0 END) as auth_count,
+                    SUM(CASE WHEN event_type NOT LIKE 'auth.%' AND event_type != 'system.error' THEN 1 ELSE 0 END) as crud_count,
+                    SUM(CASE WHEN event_type = 'system.error' THEN 1 ELSE 0 END) as error_count
+                ")
+                ->first();
+
+            $summaryStats = [
+                'total'      => (int) $raw->total,
+                'authCount'  => (int) $raw->auth_count,
+                'crudCount'  => (int) $raw->crud_count,
+                'errorCount' => (int) $raw->error_count,
+            ];
+        }
+
+        $response = $logs->toArray();
+        $response['summary'] = $summaryStats;
+
+        return response()->json($response);
     }
 
     /**
@@ -77,7 +107,7 @@ class AuditLogController extends Controller
             $msg = "Successfully cleared {$deletedCount} audit logs older than {$days} days.";
         }
 
-        // Record this clear action as a fresh audit log entry!
+        // Record this clear action as a fresh audit log entry
         AuditLog::record(
             'system.audit_cleared',
             "Audit logs cleared by admin. Retention policy applied: {$retention}.",

@@ -64,6 +64,10 @@ const AdminActivityLog = () => {
                     from: data.from || 0,
                     to: data.to || 0
                 });
+                // Stats are embedded in the main response (no filters active) — avoids 4 extra API calls
+                if (data.summary) {
+                    setStats(data.summary);
+                }
             }
         } catch (error) {
             console.error('Error fetching audit logs:', error);
@@ -85,43 +89,10 @@ const AdminActivityLog = () => {
         }
     };
 
-    const fetchStats = async () => {
-        try {
-            // Load all stats in a single fetch using query parameter options
-            // Note: Since index is paginated, we do separate lightweight counts or get them from total
-            // For now, we will perform counts on the fetched page or provide estimated stats.
-            // Let's call index with group filter to compute counts for stats cards, or calculate based on database.
-            // A cleaner way is to load count summaries directly. To keep it simple and clean, let's fetch count data.
-            const fetchCount = async (group) => {
-                const res = await apiFetch(`/api/audit-logs?event_group=${group}&per_page=1`);
-                if (res.ok) {
-                    const data = await res.json();
-                    return data.total || 0;
-                }
-                return 0;
-            };
-
-            const [auth, crud, error, total] = await Promise.all([
-                fetchCount('auth'),
-                fetchCount('crud'),
-                fetchCount('error'),
-                apiFetch('/api/audit-logs?per_page=1').then(r => r.ok ? r.json() : {}).then(d => d.total || 0)
-            ]);
-
-            setStats({
-                total,
-                authCount: auth,
-                crudCount: crud,
-                errorCount: error
-            });
-        } catch (e) {
-            console.error("Failed to load statistics summary", e);
-        }
-    };
-
     useEffect(() => {
+        // Fetch staff list and initial logs (stats are embedded in logs response)
         fetchStaff();
-        fetchStats();
+        fetchLogs(1);
     }, []);
 
     useEffect(() => {
@@ -129,12 +100,12 @@ const AdminActivityLog = () => {
         fetchLogs(1);
     }, [groupFilter, userFilter, dateFilter]);
 
-    // Handle search query with debounce
+    // Handle search query with debounce (500ms prevents burst requests while typing)
     useEffect(() => {
         const handler = setTimeout(() => {
             setPage(1);
             fetchLogs(1);
-        }, 300);
+        }, 500);
         return () => clearTimeout(handler);
     }, [searchFilter]);
 

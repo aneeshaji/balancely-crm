@@ -10,7 +10,7 @@ class ActivityController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Activity::with('user');
+        $query = Activity::with('user:id,name,role');
 
         if ($request->filled('type')) {
             $query->where('type', $request->type);
@@ -32,9 +32,16 @@ class ActivityController extends Controller
             $query->whereDate('logged_at', $request->date);
         }
 
-        $activities = $query->orderBy('logged_at', 'desc')->get();
+        $query->orderBy('logged_at', 'desc');
 
-        return response()->json($activities);
+        // If caller only wants the latest N records (e.g., dashboard recent feed), honour limit.
+        // Otherwise paginate at 50 per page so we never dump the full table over the wire.
+        if ($request->filled('limit')) {
+            $limit = min((int) $request->limit, 100);
+            return response()->json($query->limit($limit)->get());
+        }
+
+        return response()->json($query->paginate(50));
     }
 
     public function store(Request $request)
@@ -46,15 +53,15 @@ class ActivityController extends Controller
         ]);
 
         $activity = Auth::user()->activities()->create([
-            'type' => $validated['type'],
-            'details' => $validated['details'],
+            'type'             => $validated['type'],
+            'details'          => $validated['details'],
             'reference_number' => $validated['reference_number'] ?? null,
-            'logged_at' => now(),
+            'logged_at'        => now(),
         ]);
 
         return response()->json([
-            'message' => 'Activity logged successfully',
-            'activity' => $activity->load('user'),
+            'message'  => 'Activity logged successfully',
+            'activity' => $activity->load('user:id,name,role'),
         ], 201);
     }
 }

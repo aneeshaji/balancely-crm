@@ -31,7 +31,8 @@ const ActivityLog = () => {
             const res = await fetch(`/api/activities?${params.toString()}`);
             if (res.ok) {
                 const data = await res.json();
-                setActivities(data);
+                // API now paginates; unwrap .data array
+                setActivities(Array.isArray(data) ? data : (data.data || []));
             }
         } catch (error) {
             console.error('Error fetching activities:', error);

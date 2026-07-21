@@ -46,7 +46,8 @@ const DayBook = () => {
             const res = await fetch(`/api/transactions?${params.toString()}`);
             if (res.ok) {
                 const data = await res.json();
-                setTransactions(data);
+                // API now returns a paginated object; unwrap .data array
+                setTransactions(Array.isArray(data) ? data : (data.data || []));
             }
         } catch (error) {
             console.error('Error loading transactions:', error);

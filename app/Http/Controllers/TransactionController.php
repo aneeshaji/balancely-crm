@@ -13,7 +13,7 @@ class TransactionController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Transaction::with(['user', 'categoryRelation']);
+        $query = Transaction::with(['user:id,name,role', 'categoryRelation:id,name']);
 
         if ($request->filled('type')) {
             $query->where('type', $request->type);
@@ -37,7 +37,7 @@ class TransactionController extends Controller
 
         $transactions = $query->orderBy('transaction_date', 'desc')
                               ->orderBy('created_at', 'desc')
-                              ->get();
+                              ->paginate(50);
 
         return response()->json($transactions);
     }

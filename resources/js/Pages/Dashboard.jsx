@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth, apiFetch } from '../Contexts/AuthContext';
-import { 
-    TrendingUp, 
-    TrendingDown, 
-    Wallet, 
-    BookOpen, 
-    CheckCircle, 
-    Plus, 
+import {
+    TrendingUp,
+    TrendingDown,
+    Wallet,
+    BookOpen,
+    CheckCircle,
+    Plus,
     X,
     Calendar,
     ArrowUpRight,
@@ -18,7 +18,7 @@ const Dashboard = ({ setCurrentTab }) => {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [recentActivities, setRecentActivities] = useState([]);
-    
+
     // Modal states
     const [activeModal, setActiveModal] = useState(null); // 'activity', 'transaction', 'task'
     const [categories, setCategories] = useState([]);
@@ -27,16 +27,23 @@ const Dashboard = ({ setCurrentTab }) => {
     const [taskForm, setTaskForm] = useState({ title: '', description: '', due_date: new Date().toISOString().split('T')[0] });
     const [submitting, setSubmitting] = useState(false);
 
-    const fetchDashboardData = async () => {
+    // Chart controls
+    const [dateRange, setDateRange] = useState('7'); // days
+    const [tooltip, setTooltip] = useState(null); // { x, y, label, inflow, outflow }
+
+    const fetchDashboardData = async (days = '7') => {
         try {
-            const statsRes = await fetch('/api/dashboard/stats');
-            const recentActRes = await fetch('/api/activities?limit=5');
-            
+            setLoading(true);
+            const statsRes = await fetch(`/api/dashboard/stats?days=${days}`);
+            const recentActRes = await fetch(`/api/activities?limit=5`);
+
             if (statsRes.ok && recentActRes.ok) {
                 const statsData = await statsRes.json();
                 const recentActData = await recentActRes.json();
                 setStats(statsData);
                 setRecentActivities(recentActData.slice(0, 5));
+            } else {
+                console.error('Failed to load dashboard data:', { statsRes, recentActRes });
             }
         } catch (error) {
             console.error('Failed to load dashboard data:', error);
@@ -46,9 +53,9 @@ const Dashboard = ({ setCurrentTab }) => {
     };
 
     useEffect(() => {
-        fetchDashboardData();
+        fetchDashboardData(dateRange);
         apiFetch('/api/categories').then(r => r.json()).then(data => setCategories(Array.isArray(data) ? data : []));
-    }, []);
+    }, [dateRange]);
 
     const handleActivitySubmit = async (e) => {
         e.preventDefault();
@@ -62,7 +69,7 @@ const Dashboard = ({ setCurrentTab }) => {
                 showToast('Activity logged successfully!', 'success');
                 setActivityForm({ type: 'internal_note', details: '', reference_number: '' });
                 setActiveModal(null);
-                fetchDashboardData();
+                fetchDashboardData(dateRange);
             } else {
                 showToast('Failed to log activity.', 'error');
             }
@@ -85,7 +92,7 @@ const Dashboard = ({ setCurrentTab }) => {
                 showToast('Transaction recorded!', 'success');
                 setTransactionForm({ type: 'inflow', amount: '', category_id: '', category: '', description: '', transaction_date: new Date().toISOString().split('T')[0] });
                 setActiveModal(null);
-                fetchDashboardData();
+                fetchDashboardData(dateRange);
             } else {
                 showToast('Failed to record transaction.', 'error');
             }
@@ -108,7 +115,7 @@ const Dashboard = ({ setCurrentTab }) => {
                 showToast('New reminder task assigned!', 'success');
                 setTaskForm({ title: '', description: '', due_date: new Date().toISOString().split('T')[0] });
                 setActiveModal(null);
-                fetchDashboardData();
+                fetchDashboardData(dateRange);
             } else {
                 showToast('Failed to create task.', 'error');
             }
@@ -188,25 +195,30 @@ const Dashboard = ({ setCurrentTab }) => {
             <div className="dashboard-layout">
                 {/* 7-Day Financial Trend Chart */}
                 <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
-                    <div className="card-header">
-                        <h3 className="card-title">7-Day Financial Transactions Chart</h3>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', display: 'flex', gap: '12px' }}>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <span style={{ width: '10px', height: '10px', backgroundColor: 'var(--color-success)', borderRadius: '2px' }}></span> Inflows
-                            </span>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <span style={{ width: '10px', height: '10px', backgroundColor: 'var(--color-danger)', borderRadius: '2px' }}></span> Outflows
-                            </span>
-                        </span>
+                    <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <h3 className="card-title">Financial Transactions Chart</h3>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <span>Period: </span>
+                            <select
+                                value={dateRange}
+                                onChange={(e) => setDateRange(e.target.value)}
+                                className="form-control"
+                                style={{ width: '80px', padding: '4px', fontSize: '0.85rem' }}
+                            >
+                                <option value="7">7 Days</option>
+                                <option value="30">30 Days</option>
+                                <option value="90">90 Days</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div className="chart-container">
+                    <div className="chart-container" style={{ position: 'relative', height: '200px' }}>
                         <svg className="chart-svg" viewBox="0 0 700 180">
                             {/* Y-Axis lines and numbers */}
                             <line x1="40" y1="20" x2="680" y2="20" stroke="var(--border-subtle)" strokeDasharray="4" />
                             <line x1="40" y1="90" x2="680" y2="90" stroke="var(--border-subtle)" strokeDasharray="4" />
                             <line x1="40" y1="160" x2="680" y2="160" stroke="var(--border-subtle)" />
-                            
+
                             <text x="30" y="25" fill="var(--color-text-muted)" fontSize="10" textAnchor="end">₹{maxVal}</text>
                             <text x="30" y="95" fill="var(--color-text-muted)" fontSize="10" textAnchor="end">₹{(maxVal / 2).toFixed(0)}</text>
                             <text x="30" y="165" fill="var(--color-text-muted)" fontSize="10" textAnchor="end">₹0</text>
@@ -215,40 +227,60 @@ const Dashboard = ({ setCurrentTab }) => {
                             {chartData.map((d, index) => {
                                 const xBase = 60 + index * 90;
                                 const barWidth = 24;
-                                
+
                                 const inflowHeight = d.inflow * heightScale;
                                 const outflowHeight = d.outflow * heightScale;
-                                
+
                                 return (
                                     <g key={d.date}>
+                                        {/* Invisible rect for hover */}
+                                        <rect
+                                            x={xBase - 5}
+                                            y={0}
+                                            width={barWidth * 2 + 20}
+                                            height={160}
+                                            fill="transparent"
+                                            onMouseMove={(e) => {
+                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                setTooltip({
+                                                    x: e.clientX - rect.left + 10,
+                                                    y: e.clientY - rect.top - 28,
+                                                    label: d.label.split(',')[0],
+                                                    inflow: d.inflow,
+                                                    outflow: d.outflow
+                                                });
+                                            }}
+                                            onMouseLeave={() => setTooltip(null)}
+                                        />
+
                                         {/* Inflow bar */}
-                                        <rect 
-                                            x={xBase} 
-                                            y={160 - inflowHeight} 
-                                            width={barWidth} 
-                                            height={inflowHeight} 
-                                            fill="var(--color-success)" 
+                                        <rect
+                                            x={xBase}
+                                            y={160 - inflowHeight}
+                                            width={barWidth}
+                                            height={inflowHeight}
+                                            fill="var(--color-success)"
                                             rx="3"
                                             opacity="0.85"
                                         />
-                                        
+
                                         {/* Outflow bar */}
-                                        <rect 
-                                            x={xBase + barWidth + 6} 
-                                            y={160 - outflowHeight} 
-                                            width={barWidth} 
-                                            height={outflowHeight} 
-                                            fill="var(--color-danger)" 
+                                        <rect
+                                            x={xBase + barWidth + 6}
+                                            y={160 - outflowHeight}
+                                            width={barWidth}
+                                            height={outflowHeight}
+                                            fill="var(--color-danger)"
                                             rx="3"
                                             opacity="0.85"
                                         />
 
                                         {/* X Axis Labels */}
-                                        <text 
-                                            x={xBase + barWidth + 3} 
-                                            y="178" 
-                                            fill="var(--color-text-secondary)" 
-                                            fontSize="9" 
+                                        <text
+                                            x={xBase + barWidth + 3}
+                                            y="178"
+                                            fill="var(--color-text-secondary)"
+                                            fontSize="9"
                                             textAnchor="middle"
                                         >
                                             {d.label.split(',')[0]}
@@ -257,6 +289,33 @@ const Dashboard = ({ setCurrentTab }) => {
                                 );
                             })}
                         </svg>
+
+                        {/* Tooltip */}
+                        {tooltip && (
+                            <div className="chart-tooltip" style={{
+                                position: 'absolute',
+                                left: `${tooltip.x}px`,
+                                top: `${tooltip.y}px`,
+                                background: 'white',
+                                border: '1px solid var(--border-subtle)',
+                                borderRadius: '4px',
+                                padding: '8px 12px',
+                                fontSize: '0.85rem',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                                zIndex: 1000,
+                                pointerEvents: 'none'
+                            }}>
+                                <div style={{ fontWeight: '600', marginBottom: '4px' }}>{tooltip.label}</div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>Inflow:</span>
+                                    <span>₹{tooltip.inflow.toFixed(2)}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>Outflow:</span>
+                                    <span>₹{tooltip.outflow.toFixed(2)}</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -278,21 +337,27 @@ const Dashboard = ({ setCurrentTab }) => {
                         </button>
                     </div>
 
-                                    </div>
+                    <div style={{ marginTop: '24px', borderTop: '1px solid var(--border-subtle)', paddingTop: '20px' }}>
+                        <h4 style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '12px' }}>Quick Actions Guide</h4>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
+                            Use the quick action buttons above to log daily activities, record transactions, or add task reminders. All actions are tracked in the audit trail for accountability.
+                        </p>
+                    </div>
+                </div>
             </div>
 
             {/* Recent Activities Section */}
             <div className="card">
                 <div className="card-header">
                     <h3 className="card-title">Recent Activity History</h3>
-                    <button 
-                        className="btn btn-secondary btn-sm" 
+                    <button
+                        className="btn btn-secondary btn-sm"
                         onClick={() => setCurrentTab('activities')}
                     >
                         View All logs
                     </button>
                 </div>
-                
+
                 <div className="activity-timeline">
                     {recentActivities.length === 0 ? (
                         <div style={{ padding: '20px', textAlign: 'center', color: 'var(--color-text-muted)' }}>
@@ -338,7 +403,7 @@ const Dashboard = ({ setCurrentTab }) => {
                         <div className="modal-body">
                             <div className="form-group">
                                 <label className="form-label">Activity Category</label>
-                                <select 
+                                <select
                                     className="form-control"
                                     value={activityForm.type}
                                     onChange={(e) => setActivityForm({ ...activityForm, type: e.target.value })}
@@ -352,7 +417,7 @@ const Dashboard = ({ setCurrentTab }) => {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Detailed Notes</label>
-                                <textarea 
+                                <textarea
                                     className="form-control"
                                     placeholder="Enter details of what occurred..."
                                     value={activityForm.details}
@@ -362,8 +427,8 @@ const Dashboard = ({ setCurrentTab }) => {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Reference ID (Optional)</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     className="form-control"
                                     placeholder="Invoice #, PO #, Drawer ID, etc."
                                     value={activityForm.reference_number}
@@ -393,9 +458,9 @@ const Dashboard = ({ setCurrentTab }) => {
                                 <label className="form-label">Transaction Type</label>
                                 <div style={{ display: 'flex', gap: '12px' }}>
                                     <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', flexGrow: 1, padding: '10px', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', borderRadius: '6px' }}>
-                                        <input 
-                                            type="radio" 
-                                            name="tx_type" 
+                                        <input
+                                            type="radio"
+                                            name="tx_type"
                                             value="inflow"
                                             checked={transactionForm.type === 'inflow'}
                                             onChange={() => setTransactionForm({ ...transactionForm, type: 'inflow', category_id: '', category: '' })}
@@ -403,9 +468,9 @@ const Dashboard = ({ setCurrentTab }) => {
                                         <span style={{ color: 'var(--color-success)', fontWeight: 600 }}>Inflow (Income)</span>
                                     </label>
                                     <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', flexGrow: 1, padding: '10px', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', borderRadius: '6px' }}>
-                                        <input 
-                                            type="radio" 
-                                            name="tx_type" 
+                                        <input
+                                            type="radio"
+                                            name="tx_type"
                                             value="outflow"
                                             checked={transactionForm.type === 'outflow'}
                                             onChange={() => setTransactionForm({ ...transactionForm, type: 'outflow', category_id: '', category: '' })}
@@ -416,9 +481,9 @@ const Dashboard = ({ setCurrentTab }) => {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Amount (₹)</label>
-                                <input 
-                                    type="number" 
-                                    step="0.01" 
+                                <input
+                                    type="number"
+                                    step="0.01"
                                     min="0.01"
                                     className="form-control"
                                     placeholder="0.00"
@@ -429,7 +494,7 @@ const Dashboard = ({ setCurrentTab }) => {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Category</label>
-                                <select 
+                                <select
                                     className="form-control"
                                     value={transactionForm.category_id}
                                     onChange={(e) => {
@@ -446,7 +511,7 @@ const Dashboard = ({ setCurrentTab }) => {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Description / Remarks</label>
-                                <input 
+                                <input
                                     type="text"
                                     className="form-control"
                                     placeholder="Details of client, items sold, or supplier bill ID..."
@@ -457,7 +522,7 @@ const Dashboard = ({ setCurrentTab }) => {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Transaction Date</label>
-                                <input 
+                                <input
                                     type="date"
                                     className="form-control"
                                     value={transactionForm.transaction_date}
@@ -486,8 +551,8 @@ const Dashboard = ({ setCurrentTab }) => {
                         <div className="modal-body">
                             <div className="form-group">
                                 <label className="form-label">Task Title</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     className="form-control"
                                     placeholder="e.g., Follow up check collection with Roy Interiors"
                                     value={taskForm.title}
@@ -497,7 +562,7 @@ const Dashboard = ({ setCurrentTab }) => {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Task Details (Optional)</label>
-                                <textarea 
+                                <textarea
                                     className="form-control"
                                     placeholder="Enter specific instructions or phone numbers..."
                                     value={taskForm.description}
@@ -506,7 +571,7 @@ const Dashboard = ({ setCurrentTab }) => {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Due Date</label>
-                                <input 
+                                <input
                                     type="date"
                                     className="form-control"
                                     value={taskForm.due_date}
